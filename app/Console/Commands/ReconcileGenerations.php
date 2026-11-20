@@ -35,10 +35,16 @@ class ReconcileGenerations extends Command
             try {
                 $updater->apply($generation, $pixelforge->findGeneration($generation->pixelforge_id));
             } catch (PixelforgeException $e) {
-                // Rate limited or down. Stop now, the next run tries again.
-                $this->warn("Stopped early: {$e->getMessage()}");
+                if ($e->isRetryable()) {
+                    // Rate limited or down. Stop now, the next run tries again.
+                    $this->warn("Stopped early: {$e->getMessage()}");
 
-                return self::FAILURE;
+                    return self::FAILURE;
+                }
+
+                // A problem with this one image only (e.g. 404). Skip it, so it
+                // cannot block the images behind it.
+                $this->warn("Skipped {$generation->uuid}: {$e->getMessage()}");
             }
         }
 
