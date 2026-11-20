@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('credit_transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('generation_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->restrictOnDelete();
+            $table->foreignId('generation_id')->nullable()->constrained()->restrictOnDelete();
             $table->string('type');
             // Signed nanodollars: purchases are positive, charges are negative.
             $table->bigInteger('amount_nanos');

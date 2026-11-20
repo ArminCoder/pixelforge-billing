@@ -3,6 +3,8 @@
 namespace Tests\Feature\Settings;
 
 use App\Models\User;
+use App\Services\Credits;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -104,39 +106,23 @@ class ProfileUpdateTest extends TestCase
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
-    public function test_user_can_delete_their_account()
+    /** Deleting accounts is turned off: it would erase billing history (see README). */
+    public function test_accounts_cannot_be_deleted()
     {
         $user = User::factory()->create();
 
-        $response = $this
-            ->actingAs($user)
-            ->delete(route('profile.destroy'), [
-                'password' => 'password',
-            ]);
-
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect(route('home'));
-
-        $this->assertGuest();
-        $this->assertNull($user->fresh());
-    }
-
-    public function test_correct_password_must_be_provided_to_delete_account()
-    {
-        $user = User::factory()->create();
-
-        $response = $this
-            ->actingAs($user)
-            ->from(route('profile.edit'))
-            ->delete(route('profile.destroy'), [
-                'password' => 'wrong-password',
-            ]);
-
-        $response
-            ->assertSessionHasErrors('password')
-            ->assertRedirect(route('profile.edit'));
+        $this->actingAs($user)->delete('/settings/profile')->assertMethodNotAllowed();
 
         $this->assertNotNull($user->fresh());
+    }
+
+    public function test_the_database_refuses_to_delete_a_user_with_billing_history()
+    {
+        $user = User::factory()->create();
+        app(Credits::class)->purchase($user, 5_000_000_000);
+
+        $this->expectException(QueryException::class);
+
+        $user->delete();
     }
 }

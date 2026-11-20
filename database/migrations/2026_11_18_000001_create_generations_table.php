@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('generations', function (Blueprint $table) {
             $table->id();
             $table->uuid()->unique();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->restrictOnDelete();
 
             // What the user asked for.
             $table->text('prompt');
