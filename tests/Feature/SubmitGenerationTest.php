@@ -82,6 +82,31 @@ class SubmitGenerationTest extends TestCase
         $this->runJob($generation)->assertReleased(delay: 2);
     }
 
+    public function test_it_waits_as_long_as_the_rate_limit_asks(): void
+    {
+        $generation = Generation::factory()->create();
+
+        $this->fakePixelforge([
+            self::CREATE_URL => $this->errorResponse(429, 'rate_limit_exceeded', ['Retry-After' => '17']),
+        ]);
+
+        $this->runJob($generation)->assertReleased(delay: 17);
+    }
+
+    public function test_it_tries_again_when_pixelforge_does_not_answer(): void
+    {
+        $generation = Generation::factory()->create();
+
+        $this->fakePixelforge([
+            self::CREATE_URL => Http::failedConnection(),
+        ]);
+
+        // No Retry-After without an answer, so the job waits 5 seconds.
+        $this->runJob($generation)->assertReleased(delay: 5);
+
+        $this->assertSame(GenerationStatus::Queued, $generation->refresh()->status);
+    }
+
     public function test_a_rejected_prompt_fails_right_away_and_is_free(): void
     {
         $generation = Generation::factory()->create();
