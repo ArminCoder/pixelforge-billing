@@ -50,7 +50,12 @@ function csrfToken(): string {
     return match ? decodeURIComponent(match[1]) : '';
 }
 
+// Answers can arrive out of order. Only the newest request may update the box.
+let latestRequest = 0;
+
 async function loadEstimate() {
+    const request = ++latestRequest;
+
     if (form.prompt.trim() === '') {
         estimate.value = null;
         estimateMessage.value = 'Write a prompt to see the price.';
@@ -58,17 +63,27 @@ async function loadEstimate() {
         return;
     }
 
-    const response = await fetch('/generations/estimate', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            'X-XSRF-TOKEN': csrfToken(),
-        },
-        body: JSON.stringify(form.data()),
-    });
+    let response: Response | null = null;
 
-    if (response.ok) {
+    try {
+        response = await fetch('/generations/estimate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'X-XSRF-TOKEN': csrfToken(),
+            },
+            body: JSON.stringify(form.data()),
+        });
+    } catch {
+        // No answer at all (offline). Handled below like a server error.
+    }
+
+    if (request !== latestRequest) {
+        return;
+    }
+
+    if (response?.ok) {
         estimate.value = await response.json();
 
         return;
@@ -76,7 +91,7 @@ async function loadEstimate() {
 
     estimate.value = null;
     estimateMessage.value =
-        response.status === 422
+        response?.status === 422
             ? 'Fix the form to see the price.'
             : 'The price is not available right now.';
 }
