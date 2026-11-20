@@ -25,8 +25,12 @@ Pixelforge API and pay Pixelforge's cost plus 25% for each image that succeeds.
 - Cost = tokens x rate, summed over the four token types, using the **rates
   stored on that image**, not today's prices.
 - Price = cost x 125 / 100. With Pixelforge's current rates this is always a
-  whole number of nanodollars. If it ever is not, it is rounded **up**. This is
-  the only rounding in the app (`Money::divideRoundingUp`).
+  whole number of nanodollars. If it ever is not, it is rounded **up**
+  (`Money::divideRoundingUp`).
+- The cost is exact: Pixelforge says its amounts are never rounded, and with
+  its rates tokens x rate is always a whole number of nanodollars. The cost
+  calculation uses the same round-up only as a safety net, so in practice the
+  price is the only place where rounding can happen.
 - The browser never calculates money. It only formats numbers from the server.
 - The worked example from the Pixelforge docs ($0.373875000) is a unit test.
 
@@ -73,7 +77,14 @@ our numbers always match Pixelforge's.
 - The balance is the sum of the ledger (`credit_transactions`). Rows are only
   added.
 - While an image is unfinished, its highest possible price is held. The real
-  price is never above that, so a balance cannot go below zero.
+  price is never above that, so a balance cannot go below zero. One exception:
+  when we gave up on an image (`submission_unconfirmed`) its hold is released,
+  and if Pixelforge later says it did make the image, we still charge for it.
+  The balance can then dip below zero, because the charge must match what
+  Pixelforge billed us.
+- Accounts cannot be deleted. Deleting one would erase its images and charges,
+  and the admin report would no longer match Pixelforge's usage report. The
+  database enforces this too (`restrictOnDelete` on `user_id`).
 - "Buy credits" is fake and adds $5.
 
 ### Email verification
