@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -11,6 +12,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  *  - purchase: positive amount, the user bought credits
  *  - charge:   negative amount, the user paid for one image
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property int|null $generation_id
+ * @property string $type
+ * @property int $amount_nanos
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  */
 class CreditTransaction extends Model
 {
@@ -25,11 +34,13 @@ class CreditTransaction extends Model
         return ['amount_nanos' => 'integer'];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Generation, $this> */
     public function generation(): BelongsTo
     {
         return $this->belongsTo(Generation::class);

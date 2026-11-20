@@ -6,7 +6,7 @@ use App\Enums\GenerationStatus;
 use App\Jobs\StoreGenerationImage;
 use App\Models\Generation;
 use App\Support\PriceCalculator;
-use Illuminate\Support\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -97,7 +97,11 @@ class GenerationUpdater
         });
     }
 
-    /** The image is ready: save the real cost and charge the user once. */
+    /**
+     * The image is ready: save the real cost and charge the user once.
+     *
+     * @param  array<string, mixed>  $remote  a generation object from Pixelforge
+     */
     private function succeed(Generation $generation, array $remote): void
     {
         // Use the rates stored on this image, not today's prices.
@@ -119,7 +123,11 @@ class GenerationUpdater
         StoreGenerationImage::dispatch($generation)->afterCommit();
     }
 
-    /** A failed image is free. */
+    /**
+     * A failed image is free.
+     *
+     * @param  array<string, mixed>  $remote  a generation object from Pixelforge
+     */
     private function fail(Generation $generation, array $remote): void
     {
         $generation->fill([
@@ -131,8 +139,8 @@ class GenerationUpdater
         ])->save();
     }
 
-    private function time(?string $value): ?Carbon
+    private function time(?string $value): ?CarbonImmutable
     {
-        return $value === null ? null : Carbon::parse($value)->utc();
+        return $value === null ? null : CarbonImmutable::parse($value)->utc();
     }
 }

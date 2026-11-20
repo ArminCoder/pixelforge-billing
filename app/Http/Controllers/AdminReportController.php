@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use stdClass;
 
 /**
  * What users paid, what Pixelforge charged, and the profit.
@@ -47,16 +48,17 @@ class AdminReportController extends Controller
     /**
      * Databases return SUM() as a string, so turn the numbers back into integers.
      *
+     * @param  Collection<int, stdClass>  $rows  plain rows from DB::table()
      * @return list<array{label: string, images: int, paid: int, cost: int, profit: int}>
      */
     private function rows(Collection $rows): array
     {
-        return $rows->map(fn (object $row) => [
+        return array_values($rows->map(fn (stdClass $row) => [
             'label' => (string) $row->label,
             'images' => (int) $row->images,
             'paid' => (int) $row->paid,
             'cost' => (int) $row->cost,
             'profit' => (int) $row->paid - (int) $row->cost,
-        ])->all();
+        ])->all());
     }
 }

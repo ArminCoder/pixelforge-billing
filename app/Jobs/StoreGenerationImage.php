@@ -18,7 +18,11 @@ class StoreGenerationImage implements ShouldQueue
 
     public int $tries = 5;
 
-    /** Seconds to wait before each new try. */
+    /**
+     * Seconds to wait before each new try.
+     *
+     * @var list<int>
+     */
     public array $backoff = [5, 30, 120, 600];
 
     public function __construct(public Generation $generation) {}

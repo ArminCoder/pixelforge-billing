@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\GenerationStatus;
+use Carbon\CarbonImmutable;
 use Database\Factories\GenerationFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,6 +12,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * One image request. All *_nanos columns are nanodollars (see App\Support\Money).
+ *
+ * @property int $id
+ * @property string $uuid
+ * @property int $user_id
+ * @property string $prompt
+ * @property string $size
+ * @property string $quality
+ * @property list<string> $reference_images
+ * @property GenerationStatus $status
+ * @property string|null $pixelforge_id
+ * @property CarbonImmutable|null $submitted_at
+ * @property CarbonImmutable|null $started_at
+ * @property CarbonImmutable|null $completed_at
+ * @property string|null $error_code
+ * @property string|null $error_message
+ * @property int $estimated_price_min_nanos
+ * @property int $estimated_price_max_nanos
+ * @property int|null $cost_nanos
+ * @property int|null $price_nanos
+ * @property array<string, int>|null $usage
+ * @property array<string, string>|null $rates
+ * @property string|null $image_url
+ * @property string|null $image_path
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  */
 class Generation extends Model
 {
@@ -43,7 +69,11 @@ class Generation extends Model
         ];
     }
 
-    /** The uuid is what we send to Pixelforge and show in URLs. The id stays internal. */
+    /**
+     * The uuid is what we send to Pixelforge and show in URLs. The id stays internal.
+     *
+     * @return list<string>
+     */
     public function uniqueIds(): array
     {
         return ['uuid'];
@@ -54,6 +84,7 @@ class Generation extends Model
         return 'uuid';
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
